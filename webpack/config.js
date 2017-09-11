@@ -80,6 +80,7 @@ const rules = [
     exclude: /node_modules/,
     use: ['babel-loader'],
   },
+  { test: /\.sol$/, use: 'truffle-solidity-loader' },
   {
     test: /\.svg$/,
     use: [

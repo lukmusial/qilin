@@ -18,7 +18,7 @@ export default class Dashboard extends Component {
     asyncData: PropTypes.string,
     asyncError: PropTypes.object,
     asyncLoading: PropTypes.bool,
-    counter: PropTypes.number,
+    counter: PropTypes.string,
     // from react-redux connect
     dispatch: PropTypes.func,
   }
@@ -61,11 +61,11 @@ export default class Dashboard extends Component {
 
         <h2>Examples</h2>
 
-        <h3>Synchronous action</h3>
+        <h3>Retrieve token balance</h3>
         <div className='Example'>
-          <p>Counter: { counter }</p>
+          <p>Balance: { counter }</p>
           <button onClick={ this.handleTestButtonClick }>
-            Increase
+            Get Balance
           </button>
         </div>
 

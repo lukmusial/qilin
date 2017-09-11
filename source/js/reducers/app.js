@@ -1,4 +1,6 @@
 import { Map } from 'immutable';
+import getWeb3 from 'utils/getWeb3'
+import { default as contract } from 'truffle-contract'
 
 import {
   TEST_ACTION,
@@ -7,8 +9,12 @@ import {
   TEST_ASYNC_ACTION_SUCCESS,
 } from 'actions/app';
 
+import insurance_artifacts from '../../../build/contracts/Insurance.json'
+
+var Insurance = contract(insurance_artifacts);
+
 const initialState = Map({
-  counter: 0,
+  counter: "no balance",
   asyncLoading: false,
   asyncError: null,
   asyncData: null,
@@ -16,11 +22,41 @@ const initialState = Map({
 
 const actionsMap = {
   [TEST_ACTION]: (state) => {
-    const counter = state.get('counter') + 1;
+    var accounts;
+    var account;
+    web3.eth.getAccounts(function(err, accs) {
+      if (err != null) {
+        alert("There was an error fetching your accounts.");
+        return;
+      }
 
-    return state.merge(Map({
-      counter,
-    }));
+      if (accs.length == 0) {
+        alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
+        return;
+      }
+
+      accounts = accs;
+      account = accounts[0];
+    });
+
+    Insurance.setProvider(web3.currentProvider);
+    var ins;
+    var counter;
+    var balance;
+    Insurance.deployed().then(function(instance) {
+      ins = instance;
+      return ins.balanceOf.call(account, {from: account});
+    }).then(function(value) {
+      counter = value.valueOf();
+      alert(counter);
+    }).catch(function(e) {
+      console.log(e);
+    });
+
+    counter = "ass";
+     return state.merge(Map({
+         counter,
+     }));
   },
 
   // Async action

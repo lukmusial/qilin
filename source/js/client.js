@@ -9,6 +9,7 @@ import Client from 'views/Client';
 
 import es6Promise from 'es6-promise';
 import 'isomorphic-fetch';
+import getWeb3 from 'utils/getWeb3'
 
 // Load SCSS
 import '../scss/app.scss';
