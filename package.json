@@ -1,12 +1,12 @@
 {
-  "name": "marvin",
-  "version": "0.2.0",
+  "name": "qilin",
+  "version": "0.1.0",
   "private": false,
   "license": "MIT",
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server",
-    "client:dev": "webpack-dashboard -t 'Marvin' -- webpack-dev-server",
+    "client:dev": "webpack-dashboard -t 'Qilin' -- webpack-dev-server",
     "client:watch": "webpack",
     "client:build": "npm run clean && NODE_ENV=\"production\" webpack",
     "client:preview": "npm run clean && NODE_ENV=\"production\" webpack-dev-server",
@@ -83,22 +83,23 @@
     "transit-immutable-js": "^0.7.0",
     "transit-js": "^0.8.846"
   },
-  "description": "Starter boilerplate for React and Redux, using Webpack 3",
+  "description": "Ethereum contract with React frontend",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/workco/marvin.git"
+    "url": "https://github.com/docent666/qilin"
   },
   "keywords": [
     "react",
     "redux",
-    "webpack2",
-    "boilerplate"
+    "webpack3",
+    "solidity",
+    "ethereum"
   ],
-  "author": "Stanko",
+  "author": "",
   "bugs": {
-    "url": "https://github.com/workco/marvin/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/workco/marvin#readme",
+  "homepage": "https://github.com/docent666/qilin",
   "prepush": [
     "npm run lint-hook --silent"
   ]
