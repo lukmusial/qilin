@@ -1,12 +1,12 @@
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.18;
 
 import 'zeppelin-solidity/contracts/token/StandardToken.sol';
 import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
 
 contract Insurance is StandardToken, Ownable {
 
-	string public constant name = "ClaiMeToken";
-	string public constant symbol = "CMT";
+	string public constant name = "Insurance Pool Token";
+	string public constant symbol = "IPT";
 	uint256 public constant decimals = 18;
 	uint256 public constant INITIAL_SUPPLY = 100;
 
@@ -41,7 +41,7 @@ contract Insurance is StandardToken, Ownable {
 		balances[msg.sender] = INITIAL_SUPPLY;
 	}
 
-	function init(uint maxPoolSize, uint retentionRatio, uint lapseBlock) onlyOwner {
+	function init(uint maxPoolSize, uint retentionRatio, uint lapseBlock) public onlyOwner {
 		MAXIMUM_POOL_SIZE = maxPoolSize;
 		RETENTION = retentionRatio;
         LAPSE_BLOCK = lapseBlock;
@@ -53,7 +53,7 @@ contract Insurance is StandardToken, Ownable {
 		throw;
 	}
 
-	function contribute() payable onlyOwner {
+	function contribute() public payable onlyOwner {
         require(!contractFull);
 		poolSize = poolSize + msg.value;
 		contributors[msg.sender] = contributors[msg.sender] + msg.value;
@@ -65,7 +65,7 @@ contract Insurance is StandardToken, Ownable {
 	}
 
 	function participate(address to, uint tokens) payable onlyOwner {
-        require(contractFull);
+    require(contractFull);
 		transferFrom(msg.sender, to, tokens);
 	}
 
@@ -89,20 +89,20 @@ contract Insurance is StandardToken, Ownable {
 			msg.sender.transfer(insurances[msg.sender].claimSize);
 			insurances[msg.sender].claimed = true;
 		}
-    }
+  }
 
     //todo: only allow when all insurances are claimed or lapsed
-    function withdrawAsParticipant() payable {
-        require(balances[msg.sender] > 0);
-        require(block.timestamp >= LAPSE_BLOCK);
-        var toTransfer = contributors[owner] * balances[msg.sender] / INITIAL_SUPPLY;
-        var premiumsToTransfer = premiums * balances[msg.sender] / INITIAL_SUPPLY;
-        msg.sender.transfer(toTransfer + premiumsToTransfer);
-        contributors[owner] -= toTransfer;
-        premiums -= premiumsToTransfer;
-		if (msg.sender != owner) {approve(msg.sender, balanceOf(msg.sender));}
-		//forfeit the tokens to prevent further withdrawals
-		transferFrom(msg.sender, this, balanceOf(msg.sender));
-    }
+  function withdrawAsParticipant() payable {
+    require(balances[msg.sender] > 0);
+    require(block.timestamp >= LAPSE_BLOCK);
+    var toTransfer = contributors[owner] * balances[msg.sender] / INITIAL_SUPPLY;
+    var premiumsToTransfer = premiums * balances[msg.sender] / INITIAL_SUPPLY;
+    msg.sender.transfer(toTransfer + premiumsToTransfer);
+    contributors[owner] -= toTransfer;
+    premiums -= premiumsToTransfer;
+    if (msg.sender != owner) {approve(msg.sender, balanceOf(msg.sender));}
+    //forfeit the tokens to prevent further withdrawals
+    transferFrom(msg.sender, this, balanceOf(msg.sender));
+  }
 
 }
