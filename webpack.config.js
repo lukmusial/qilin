@@ -17,7 +17,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 // Default client app entry file
 const entry = [
-  path.join(paths.javascript, 'client.js'),
+  path.join(paths.javascript, 'exchange.js'),
 ];
 
 plugins.push(
@@ -36,7 +36,7 @@ plugins.push(
     path: paths.build,
     filename: 'index.html',
     minify: {
-      collapseWhitespace: true,
+      collapseWhitespace: false,
       minifyCSS: true,
       minifyJS: true,
       removeComments: true,

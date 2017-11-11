@@ -96,16 +96,30 @@ export default class App extends React.Component{
 
 render(){
     return (
-      <div>
-      <form onSubmit={this.updateBalances}>
-        <button>IPT & Tether Balance</button>
-      </form>
-      Current Account Owner IPT Balance: <span id="iptBalance">{this.state.ownerBalance}</span><br/>
-      Current Account Tether Balance: <span id="tetherBalance">{this.state.tetherBalance}</span><br/>
-      <form onSubmit={this.fundInsurance}>
-        <input value = {this.state.fundAmount} onChange={evt => this.updateFundAmount(evt)}/>
-        <button>Fund Insurance</button>
-      </form>
+      <div className="pure-u-1-3">
+        <form className="pure-form pure-form-aligned" onSubmit={this.updateBalances}>
+          <fieldset>
+                <div className="pure-control-group">
+                 <label>Current Account Owner IPT Balance: </label><span id="iptBalance">{this.state.ownerBalance}</span>
+                 </div>
+                  <div className="pure-control-group">
+                 <label>Current Account Tether Balance: </label><span id="tetherBalance">{this.state.tetherBalance}</span>
+                 </div>
+                  <div className="pure-control-group">
+                 <button>IPT & Tether Balance</button>
+                </div>
+         </fieldset>
+        </form>
+        <form className="pure-form pure-form-aligned" onSubmit={this.fundInsurance}>
+          <fieldset>
+                <div className="pure-control-group">
+                  <input value = {this.state.fundAmount} onChange={evt => this.updateFundAmount(evt)}/>
+                </div>
+                <div className="pure-control-group">
+                  <button>Fund Insurance</button>
+                </div>
+          </fieldset>
+        </form>
       </div>
     );
   }
