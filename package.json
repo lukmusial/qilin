@@ -56,7 +56,6 @@
     "web3": "^0.18.2"
   },
   "dependencies": {
-    "zeppelin-solidity": "^1.2.0",
     "babel-polyfill": "^6.26.0",
     "es6-promise": "^4.1.1",
     "express": "^4.15.4",
@@ -64,12 +63,15 @@
     "immutable": "^3.8.1",
     "isomorphic-fetch": "^2.2.1",
     "prop-types": "^15.5.10",
+    "purecss": "^1.0.0",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
+    "react-redux-grid": "^5.5.0",
     "react-router": "^4.2.0",
     "react-router-dom": "^4.2.2",
     "transit-immutable-js": "^0.7.0",
-    "transit-js": "^0.8.846"
+    "transit-js": "^0.8.846",
+    "zeppelin-solidity": "^1.2.0"
   },
   "description": "Ethereum contract with React frontend",
   "repository": {

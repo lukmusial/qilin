@@ -10,7 +10,7 @@ import 'isomorphic-fetch';
 import getWeb3 from 'utils/getWeb3'
 
 // Load SCSS
-import '../scss/app.scss';
+//import '../css/side-menu';
 
 es6Promise.polyfill();
 
