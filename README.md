@@ -4,7 +4,6 @@ ERC20 compatible token as collateral (smart contract being a trust fund for the 
 Contract extends ERC20 token as well, allowing the owner to issue Insurance Linked Security.
 
 # Blockchain Insurance Competition Zug 2017 top ten finalist http://www.blockchaincompetition.ch/
-Until the competition is concluded the project goes stealth, but will be updated soon after.
 
 Boilerplate React/Webpack code based on Marvin:
 https://github.com/workco/marvin
@@ -25,7 +24,13 @@ Concrete representation of several types of insurance in contract's data structu
 Integration with SWARM to allow storage of contract documents
 
 
+# Setup instructions
 
-Known issues:
-Tested with truffle 3 and 4. Tests pass when using testRPC, some failures on truffle 4 internal blockchain.
+install truffle, node.js
+
+npm install
+npm install zeppelin-solidity
+truffle compile
+truffle develop 
+test
 

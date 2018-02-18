@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-import 'zeppelin-solidity/contracts/token/StandardToken.sol';
+import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
 
 contract Insurance is StandardToken, Ownable {
@@ -37,7 +37,6 @@ contract Insurance is StandardToken, Ownable {
     uint public premiums = 0;
 
 	function Insurance() {
-		totalSupply = INITIAL_SUPPLY;
 		balances[msg.sender] = INITIAL_SUPPLY;
 	}
 

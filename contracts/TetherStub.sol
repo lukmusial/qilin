@@ -1,6 +1,6 @@
 pragma solidity ^0.4.2;
 
-import 'zeppelin-solidity/contracts/token/StandardToken.sol';
+import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 
 contract TetherStub is StandardToken {
 

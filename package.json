@@ -71,7 +71,7 @@
     "react-router-dom": "^4.2.2",
     "transit-immutable-js": "^0.7.0",
     "transit-js": "^0.8.846",
-    "zeppelin-solidity": "^1.2.0"
+    "zeppelin-solidity": "^1.6.0"
   },
   "description": "Ethereum contract with React frontend",
   "repository": {

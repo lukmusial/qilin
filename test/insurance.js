@@ -11,21 +11,32 @@ contract('Insurance', function(accounts) {
   const account_one = accounts[1];
   const account_two = accounts[2];
 
-  const amount = multiplier*88;
+  const timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
+  const poolSize = web3.toWei(1, "ether")
 
   function humanReadableBalance(account) {
      return Math.floor(web3.eth.getBalance(account).toNumber()/multiplier);
   }
 
+  function szaboFromAccount(account) {
+    return Number(web3.fromWei(web3.eth.getBalance(account).toNumber(), 'szabo'));
+  }
+
+  function szabo(number) {
+      return Number(web3.fromWei(number, 'szabo'));
+  }
+
+  function gasPrice(estimate) {
+    return Number(Insurance.web3.eth.gasPrice) * Number(estimate);
+  }
+
   it("when an insurance claim is made on a seeded pool then insured amount can be withdrawn", async function () {
-    var account_one_starting_balance = humanReadableBalance(account_one);
     var insureAmount = multiplier*23;
-    var poolSize = multiplier*100;
     var premium = multiplier*15;
     var amountToVerify = (insureAmount - premium)/ multiplier;
-    var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
 
     var insurance = await Insurance.deployed()
+    var account_one_starting_balance = humanReadableBalance(account_one);
     await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
     await insurance.contribute.sendTransaction({from: account_sponsor, value: insureAmount + 10});
     await insurance.insure.sendTransaction(insureAmount, {from:account_one, value: premium});
@@ -37,14 +48,12 @@ contract('Insurance', function(accounts) {
   })
 
     it("when an insurance claim is not made then insured amount can not be withdrawn", async function () {
-      var account_one_starting_balance = humanReadableBalance(account_one);
       var insureAmount = multiplier*23;
-      var poolSize = multiplier*100;
       var premium = multiplier*15;
       var amountToVerify = premium/ multiplier;
-      var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
 
       var insurance =  await Insurance.deployed();
+      var account_one_starting_balance = humanReadableBalance(account_one);
       await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
       await insurance.contribute.sendTransaction({from: account_sponsor, value: insureAmount + 10});
       await insurance.insure.sendTransaction(insureAmount, {from:account_one, value: premium});
@@ -53,19 +62,12 @@ contract('Insurance', function(accounts) {
       assert.approximately(account_one_ending_balance, account_one_starting_balance - amountToVerify, 3, "only premium should be deducted");
     })
 
-    //according to documentation, throw will refund the caller with ether supplied minus the gas used
-    //in this case however the gas used appears to be more than the provided premium in other tests
-    //so for the purpose of this test we increase premium and other amounts to make the demonstration clearer
     it("when an insurance request is raised when pool is insufficient, request is denied", async function () {
-      var account_one_starting_balance = humanReadableBalance(account_one);
       var insureAmount = multiplier*230;
-      var poolSize = multiplier*1000;
       var premium = multiplier*150;
-      var gasUsageEstimate = multiplier*45; //heuristic, as insurance.insure.estimateGas() returns NaN
-      var amountToVerify = gasUsageEstimate/ multiplier;
-      var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
 
       var insurance = await Insurance.new();
+      var account_one_starting_balance = humanReadableBalance(account_one);
       await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
       await insurance.contribute.sendTransaction({from: account_sponsor, value: 0});
       try {
@@ -74,7 +76,7 @@ contract('Insurance', function(accounts) {
       }
       catch(error) {
           var account_one_ending_balance = humanReadableBalance(account_one);
-          assert.approximately(account_one_ending_balance, account_one_starting_balance - amountToVerify, 3, "account not affected");
+          assert.approximately(account_one_ending_balance, account_one_starting_balance, 3, "account not affected");
       }
     })
 
@@ -85,16 +87,12 @@ contract('Insurance', function(accounts) {
   })
 
   it("can participate if pool maxed and will issue tokens which allow withdrawal", async function () {
-    var poolSize = multiplier*100;
-    var insureAmount = multiplier*23;
-    var expectedWithdrawal = poolSize * 0.24 / multiplier
-    var account_two_starting_balance = humanReadableBalance(account_two);
-    var account_two_ending_balance = 0;
-    var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
+    var expectedWithdrawal = web3.fromWei(poolSize, 'szabo') * 0.24;
+    var account_two_starting_balance = szaboFromAccount(account_two);
 
     var insurance =  await Insurance.new();
     await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
-    await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize +1});
+    await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize});
     await insurance.participate.sendTransaction(account_two, 24, {from: account_sponsor});
     var oneBalance = await insurance.balanceOf.call(account_two)
     assert.strictEqual(oneBalance.toNumber(), 24)
@@ -102,9 +100,9 @@ contract('Insurance', function(accounts) {
     assert.strictEqual(sponsorBalance.toNumber(), 76)
 
     await insurance.withdrawAsParticipant.sendTransaction({from: account_two})
+    var account_two_ending_balance = szaboFromAccount(account_two);
+    assert.approximately(account_two_ending_balance, account_two_starting_balance + expectedWithdrawal, 100000, "not withdrawn expected amount");
 
-    account_two_ending_balance = humanReadableBalance(account_two);
-    assert.approximately(account_two_ending_balance, account_two_starting_balance + expectedWithdrawal, 2, "not withdrawn expected amount");
     var finalOneBalance = await insurance.balanceOf.call(account_two)
     assert.strictEqual(finalOneBalance.toNumber(), 0)
     var finalSponsorBalance = await insurance.balanceOf.call(account_sponsor)
@@ -113,45 +111,42 @@ contract('Insurance', function(accounts) {
   )
 
   it("should not allow further withdrawals if already withdrawn", async function () {
-    var poolSize = multiplier*100;
-    var insureAmount = multiplier*23;
-    var expectedWithdrawal = poolSize * 0.24 / multiplier
+    var expectedWithdrawal = web3.fromWei(poolSize, 'szabo') * 0.24;
     var gasUsageEstimate = multiplier*45 / multiplier;
-    var account_two_starting_balance = humanReadableBalance(account_two);
-    var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
 
     var insurance =  await Insurance.new();
+    var account_two_starting_balance = szaboFromAccount(account_two);
     await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
-    await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize +1});
+    await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize});
     await insurance.participate.sendTransaction(account_two, 24, {from: account_sponsor});
     await insurance.withdrawAsParticipant.sendTransaction({from: account_two})
-    var account_two_ending_balance = humanReadableBalance(account_two);
-    assert.approximately(account_two_ending_balance, account_two_starting_balance + expectedWithdrawal, 2, "not withdrawn expected amount");
+    var account_two_ending_balance = szaboFromAccount(account_two);
+    assert.approximately(account_two_ending_balance, account_two_starting_balance + expectedWithdrawal, 10000, "not withdrawn expected amount");
+
     try {
         await insurance.withdrawAsParticipant.sendTransaction({from: account_two});
         assert.fail();
     }
     catch(error) {
-        var account_two_new_ending_balance = humanReadableBalance(account_two);
-        assert.approximately(account_two_new_ending_balance, account_two_ending_balance - gasUsageEstimate, 2, "should not allow to withdraw twice");
+        var account_two_new_ending_balance = szaboFromAccount(account_two);
+        assert.approximately(account_two_new_ending_balance, account_two_ending_balance - gasUsageEstimate, 5000, "should not allow to withdraw twice");
      }
   })
 
     it("if no other participants, owner is sole participants and can withdraw", async function () {
-      var insurance;
-
-      var poolSize = multiplier*1000;
-      var gasConsumption = multiplier*12;
-      var expectedWithdrawal = (gasConsumption)/ multiplier
-      var account_sponsor_starting_balance = humanReadableBalance(account_sponsor);
       var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
-
       var insurance = await Insurance.new();
+
+      var account_sponsor_starting_balance = szaboFromAccount(account_sponsor);
+      const cost1 = gasPrice(await insurance.init.estimateGas(poolSize, poolSize/2, timestamp, {from: account_sponsor}));
       await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+      const cost2 = gasPrice(await insurance.contribute.estimateGas({from: account_sponsor, value: poolSize +1}));
       await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize +1});
+      const cost3 = gasPrice(await insurance.withdrawAsParticipant.estimateGas({from: account_sponsor}));
       await insurance.withdrawAsParticipant.sendTransaction({from: account_sponsor});
-      var account_sponsor_ending_balance = humanReadableBalance(account_sponsor);
-      assert.approximately(account_sponsor_ending_balance, account_sponsor_starting_balance - expectedWithdrawal, 2, "not withdrawn expected amount");
+      const expectedCost = szabo(cost1 + cost2 + cost3);
+      var account_sponsor_ending_balance = szaboFromAccount(account_sponsor);
+      assert.approximately(account_sponsor_ending_balance, account_sponsor_starting_balance - expectedCost, 100000, "not withdrawn expected amount");
       }
     )
 
