@@ -11,17 +11,17 @@ contract ManualAuthorizationInsurance is Insurance {
     function ManualAuthorizationInsurance() {
     }
 
-    function assignAuthoriser(address auth) onlyOwner {
-        authoriser = auth;
+    function assignAuthoriser(address _auth) onlyOwner {
+        authoriser = _auth;
     }
 
     function claim() payable {
         RequestAuthorisation(msg.sender);
     }
 
-    function authoriseClaim(address claimant) {
-        if (msg.sender == authoriser && insurances[claimant].exists) {
-            insurances[claimant].withdrawable = true;
+    function authoriseClaim(address _claimant) {
+        if (msg.sender == authoriser && insurances[_claimant].exists) {
+            insurances[_claimant].withdrawable = true;
         }
     }
 

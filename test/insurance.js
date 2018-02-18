@@ -37,7 +37,7 @@ contract('Insurance', function(accounts) {
 
     var insurance = await Insurance.deployed()
     var account_one_starting_balance = humanReadableBalance(account_one);
-    await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+    await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
     await insurance.contribute.sendTransaction({from: account_sponsor, value: insureAmount + 10});
     await insurance.insure.sendTransaction(insureAmount, {from:account_one, value: premium});
     await insurance.claim.sendTransaction({from:account_one});
@@ -54,7 +54,7 @@ contract('Insurance', function(accounts) {
 
       var insurance =  await Insurance.deployed();
       var account_one_starting_balance = humanReadableBalance(account_one);
-      await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+      await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
       await insurance.contribute.sendTransaction({from: account_sponsor, value: insureAmount + 10});
       await insurance.insure.sendTransaction(insureAmount, {from:account_one, value: premium});
       await insurance.withdraw.sendTransaction({from:account_one});
@@ -68,7 +68,7 @@ contract('Insurance', function(accounts) {
 
       var insurance = await Insurance.new();
       var account_one_starting_balance = humanReadableBalance(account_one);
-      await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+      await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
       await insurance.contribute.sendTransaction({from: account_sponsor, value: 0});
       try {
         await insurance.insure.sendTransaction(insureAmount, {from:account_one, value: premium});
@@ -91,7 +91,7 @@ contract('Insurance', function(accounts) {
     var account_two_starting_balance = szaboFromAccount(account_two);
 
     var insurance =  await Insurance.new();
-    await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+    await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
     await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize});
     await insurance.participate.sendTransaction(account_two, 24, {from: account_sponsor});
     var oneBalance = await insurance.balanceOf.call(account_two)
@@ -116,7 +116,7 @@ contract('Insurance', function(accounts) {
 
     var insurance =  await Insurance.new();
     var account_two_starting_balance = szaboFromAccount(account_two);
-    await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+    await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
     await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize});
     await insurance.participate.sendTransaction(account_two, 24, {from: account_sponsor});
     await insurance.withdrawAsParticipant.sendTransaction({from: account_two})
@@ -138,8 +138,8 @@ contract('Insurance', function(accounts) {
       var insurance = await Insurance.new();
 
       var account_sponsor_starting_balance = szaboFromAccount(account_sponsor);
-      const cost1 = gasPrice(await insurance.init.estimateGas(poolSize, poolSize/2, timestamp, {from: account_sponsor}));
-      await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+      const cost1 = gasPrice(await insurance.init.estimateGas(poolSize, timestamp, {from: account_sponsor}));
+      await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
       const cost2 = gasPrice(await insurance.contribute.estimateGas({from: account_sponsor, value: poolSize +1}));
       await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize +1});
       const cost3 = gasPrice(await insurance.withdrawAsParticipant.estimateGas({from: account_sponsor}));
@@ -154,7 +154,6 @@ contract('Insurance', function(accounts) {
 
     //test timestamp preventing withdrawal from owner and participant
    //test init function
-   //add checks that the max and ratio are used
   //if not claimable do not allow to withdraw
   //if already claimed do not allow to withdraw
   //should not allow to insure if the premium is not paid

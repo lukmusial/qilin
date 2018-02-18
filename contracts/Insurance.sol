@@ -11,10 +11,8 @@ contract Insurance is StandardToken, Ownable {
 	uint256 public constant INITIAL_SUPPLY = 100;
 
 	uint MAXIMUM_POOL_SIZE = 0;
-    //token retention ratio - 20% to remain with the owner (insurance company). currently not used
-    uint RETENTION = 0;
-    uint LAPSE_BLOCK = 0;
-    bool public contractFull = false;
+  uint LAPSE_BLOCK = 0;
+  bool public contractFull = false;
 
 	struct Insured {
 		bool withdrawable;
@@ -22,8 +20,8 @@ contract Insurance is StandardToken, Ownable {
 		uint claimSize;
 		bool exists;
 		uint premium;
-        uint policyStartTime;
-        uint policyEndTime;
+    uint policyStartTime;
+    uint policyEndTime;
 		//underlying
 	}
 
@@ -36,24 +34,23 @@ contract Insurance is StandardToken, Ownable {
     uint public totalInsured = 0;
     uint public premiums = 0;
 
-	function Insurance() {
+	function Insurance() public {
 		balances[msg.sender] = INITIAL_SUPPLY;
 	}
 
-	function init(uint maxPoolSize, uint retentionRatio, uint lapseBlock) public onlyOwner {
-		MAXIMUM_POOL_SIZE = maxPoolSize;
-		RETENTION = retentionRatio;
-        LAPSE_BLOCK = lapseBlock;
+	function init(uint _maxPoolSize, uint _lapseBlock) public onlyOwner {
+		MAXIMUM_POOL_SIZE = _maxPoolSize;
+    LAPSE_BLOCK = _lapseBlock;
 	}
 
 	//fallback function
 	function() {
 		//if ether is sent to this address, send it back.
-		throw;
+		revert();
 	}
 
 	function contribute() public payable onlyOwner {
-        require(!contractFull);
+    require(!contractFull);
 		poolSize = poolSize + msg.value;
 		contributors[msg.sender] = contributors[msg.sender] + msg.value;
         if (poolSize >= MAXIMUM_POOL_SIZE) {
@@ -63,27 +60,27 @@ contract Insurance is StandardToken, Ownable {
 		}
 	}
 
-	function participate(address to, uint tokens) payable onlyOwner {
+	function participate(address _to, uint _tokens) public payable onlyOwner {
     require(contractFull);
-		transferFrom(msg.sender, to, tokens);
+		transferFrom(msg.sender, _to, _tokens);
 	}
 
-	function insure(uint insuranceAmount) payable {
-        require(poolSize >= totalInsured + insuranceAmount);
-		var insured = Insured(false, false, insuranceAmount, true, msg.value, now, now);
+	function insure(uint _insuranceAmount) public payable {
+    require(poolSize >= totalInsured + _insuranceAmount);
+		var insured = Insured(false, false, _insuranceAmount, true, msg.value, now, now);
 		insurances[msg.sender] = insured;
-        totalInsured = totalInsured + insuranceAmount;
-        premiums = premiums + msg.value;
+    totalInsured = totalInsured + _insuranceAmount;
+    premiums = premiums + msg.value;
 	}
 
 // this function should be overriden in non-demo versions of the contract to allow injection of claim procedures
-	function claim() payable {
+	function claim() public payable {
 		if (insurances[msg.sender].exists) {
 			insurances[msg.sender].withdrawable = true;
 		}
 	}
 
-	function withdraw() payable {
+	function withdraw() public payable {
 		if (insurances[msg.sender].withdrawable) {
 			msg.sender.transfer(insurances[msg.sender].claimSize);
 			insurances[msg.sender].claimed = true;
@@ -91,7 +88,7 @@ contract Insurance is StandardToken, Ownable {
   }
 
     //todo: only allow when all insurances are claimed or lapsed
-  function withdrawAsParticipant() payable {
+  function withdrawAsParticipant() public payable {
     require(balances[msg.sender] > 0);
     require(block.timestamp >= LAPSE_BLOCK);
     var toTransfer = contributors[owner] * balances[msg.sender] / INITIAL_SUPPLY;

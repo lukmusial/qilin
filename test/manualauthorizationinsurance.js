@@ -27,7 +27,7 @@ contract('ManualAuthorizationInsurance', function(accounts) {
     var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
 
     var insurance = await Insurance.deployed();
-    await insurance.init.sendTransaction(poolSize, poolSize/2, timestamp, {from: account_sponsor});
+    await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
     await insurance.contribute.sendTransaction({from: account_sponsor, value: insureAmount + 10});
     await insurance.insure.sendTransaction(insureAmount, {from:account_one, value: premium});
     await insurance.claim.sendTransaction({from:account_one});
