@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
 import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
@@ -12,7 +12,6 @@ contract Insurance is StandardToken, Ownable {
 
 	uint MAXIMUM_POOL_SIZE = 0;
   uint LAPSE_BLOCK = 0;
-  bool public contractFull = false;
 
 	struct Insured {
 		bool withdrawable;
@@ -25,80 +24,98 @@ contract Insurance is StandardToken, Ownable {
 		//underlying
 	}
 
+  enum Stages {
+    New,
+    Initialized
+  }
+
+  Stages public stage = Stages.New;
+
 	mapping(address => Insured) insurances;
-	mapping(address => uint) contributors;
 	uint public insurancesCount = 0;
-	uint insurancesClaimed = 0;
-	uint insurancesLapsed = 0;
-	uint poolSize = 0;
-    uint public totalInsured = 0;
-    uint public premiums = 0;
+  uint public poolSize = 0;
+	uint public insurancesToClaim = 0;
+  uint public totalInsured = 0;
+  uint public premiums = 0;
 
 	function Insurance() public {
 		balances[msg.sender] = INITIAL_SUPPLY;
 	}
 
-	function init(uint _maxPoolSize, uint _lapseBlock) public onlyOwner {
+  modifier atStage(Stages _stage) {
+    require(stage == _stage);
+    _;
+  }
+
+  modifier hasMatured {
+    require(block.timestamp >= LAPSE_BLOCK);
+    _;
+  }
+
+	function init(uint _maxPoolSize, uint _lapseBlock) public onlyOwner atStage(Stages.New) {
+    require(this.balance == 0);
 		MAXIMUM_POOL_SIZE = _maxPoolSize;
     LAPSE_BLOCK = _lapseBlock;
+    approve(msg.sender, INITIAL_SUPPLY);
+    stage = Stages.Initialized;
 	}
 
 	//fallback function
-	function() {
+	function() public {
 		//if ether is sent to this address, send it back.
 		revert();
 	}
 
-	function contribute() public payable onlyOwner {
-    require(!contractFull);
+	function contribute() public payable onlyOwner atStage(Stages.Initialized) {
+    require(poolSize + msg.value <= MAXIMUM_POOL_SIZE);
 		poolSize = poolSize + msg.value;
-		contributors[msg.sender] = contributors[msg.sender] + msg.value;
-        if (poolSize >= MAXIMUM_POOL_SIZE) {
-			contractFull = true;
-			//contract is filled, so we can now release participation tokens
-			approve(owner, INITIAL_SUPPLY);
-		}
 	}
 
-	function participate(address _to, uint _tokens) public payable onlyOwner {
-    require(contractFull);
+	function participate(address _to, uint _tokens) public payable onlyOwner atStage(Stages.Initialized) {
 		transferFrom(msg.sender, _to, _tokens);
 	}
 
-	function insure(uint _insuranceAmount) public payable {
+	function insure(uint _insuranceAmount) public payable atStage(Stages.Initialized) {
     require(poolSize >= totalInsured + _insuranceAmount);
 		var insured = Insured(false, false, _insuranceAmount, true, msg.value, now, now);
 		insurances[msg.sender] = insured;
+    //TODO: convert to use SafeMath
     totalInsured = totalInsured + _insuranceAmount;
     premiums = premiums + msg.value;
 	}
 
 // this function should be overriden in non-demo versions of the contract to allow injection of claim procedures
+//this version of the contract allows automatically authorises claims
 	function claim() public payable {
 		if (insurances[msg.sender].exists) {
 			insurances[msg.sender].withdrawable = true;
+      insurancesToClaim += 1;
 		}
 	}
 
 	function withdraw() public payable {
 		if (insurances[msg.sender].withdrawable) {
-			msg.sender.transfer(insurances[msg.sender].claimSize);
-			insurances[msg.sender].claimed = true;
+      require(poolSize >= insurances[msg.sender].claimSize);
+      insurances[msg.sender].claimed = true;
+      insurances[msg.sender].withdrawable = false;
+      poolSize -= insurances[msg.sender].claimSize;
+      insurancesToClaim -= 1;
+      msg.sender.transfer(insurances[msg.sender].claimSize);
 		}
   }
 
-    //todo: only allow when all insurances are claimed or lapsed
-  function withdrawAsParticipant() public payable {
+  function withdrawAsParticipant() public payable hasMatured {
     require(balances[msg.sender] > 0);
-    require(block.timestamp >= LAPSE_BLOCK);
-    var toTransfer = contributors[owner] * balances[msg.sender] / INITIAL_SUPPLY;
+    require(insurancesToClaim == 0);
+    var toTransfer = this.balance * balances[msg.sender] / INITIAL_SUPPLY;
     var premiumsToTransfer = premiums * balances[msg.sender] / INITIAL_SUPPLY;
-    msg.sender.transfer(toTransfer + premiumsToTransfer);
-    contributors[owner] -= toTransfer;
+    require(this.balance >= toTransfer);
+    require(premiums >= premiumsToTransfer);
+    //TODO: convert to use SafeMath
     premiums -= premiumsToTransfer;
     if (msg.sender != owner) {approve(msg.sender, balanceOf(msg.sender));}
     //forfeit the tokens to prevent further withdrawals
     transferFrom(msg.sender, this, balanceOf(msg.sender));
+    msg.sender.transfer(toTransfer);
   }
-
 }

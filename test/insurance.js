@@ -52,7 +52,7 @@ contract('Insurance', function(accounts) {
       var premium = multiplier*15;
       var amountToVerify = premium/ multiplier;
 
-      var insurance =  await Insurance.deployed();
+      var insurance =  await Insurance.new();
       var account_one_starting_balance = humanReadableBalance(account_one);
       await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
       await insurance.contribute.sendTransaction({from: account_sponsor, value: insureAmount + 10});
@@ -133,15 +133,32 @@ contract('Insurance', function(accounts) {
      }
   })
 
-    it("if no other participants, owner is sole participants and can withdraw", async function () {
-      var timestamp = web3.eth.getBlock(web3.eth.blockNumber).timestamp
+    it("should not allow participant withdrawals if claims were made but not yet claimed", async function () {
+      var gasUsageEstimate = multiplier*45 / multiplier;
+      var premium = multiplier*15;
+
+      var insurance =  await Insurance.new();
+      var account_two_starting_balance = szaboFromAccount(account_two);
+      await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
+      await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize});
+      await insurance.insure.sendTransaction(1000, {from:account_one, value: premium});
+      await insurance.participate.sendTransaction(account_two, 24, {from: account_sponsor});
+      await insurance.claim.sendTransaction({from:account_one});
+      try {
+          await insurance.withdrawAsParticipant.sendTransaction({from: account_two});
+          assert.fail();
+      }
+      catch(error) {}
+    })
+
+    it("if no other participants, owner is sole participants and can withdraw", async function() {
       var insurance = await Insurance.new();
 
       var account_sponsor_starting_balance = szaboFromAccount(account_sponsor);
       const cost1 = gasPrice(await insurance.init.estimateGas(poolSize, timestamp, {from: account_sponsor}));
       await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
-      const cost2 = gasPrice(await insurance.contribute.estimateGas({from: account_sponsor, value: poolSize +1}));
-      await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize +1});
+      const cost2 = gasPrice(await insurance.contribute.estimateGas({from: account_sponsor, value: poolSize}));
+      await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize});
       const cost3 = gasPrice(await insurance.withdrawAsParticipant.estimateGas({from: account_sponsor}));
       await insurance.withdrawAsParticipant.sendTransaction({from: account_sponsor});
       const expectedCost = szabo(cost1 + cost2 + cost3);
@@ -149,6 +166,26 @@ contract('Insurance', function(accounts) {
       assert.approximately(account_sponsor_ending_balance, account_sponsor_starting_balance - expectedCost, 100000, "not withdrawn expected amount");
       }
     )
+
+    it("should not allow to contribute more than maximum pool size", async function() {
+      var insurance = await Insurance.new();
+      await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
+      try {
+          await insurance.contribute.sendTransaction({from: account_sponsor, value: poolSize +1 });
+          assert.fail();
+      }
+      catch(error) {}
+    })
+
+    it("should not be initialised twice", async function() {
+      var insurance = await Insurance.new();
+      await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
+      try {
+       await insurance.init.sendTransaction(poolSize, timestamp, {from: account_sponsor});
+       assert.fail();
+      }
+      catch(error) {}
+    })
 
 
 
